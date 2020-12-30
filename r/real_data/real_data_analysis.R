@@ -10,10 +10,13 @@ if (!require(viridis)) install.packages("viridis"); library(viridis)
 if (!require(rstanarm)) install.packages("rstanarm"); library(rstanarm)
 options(mc.cores = parallel::detectCores())
 if (!require(bayestestR)) install.packages("bayestestR"); library(bayestestR)
+if (!require(patchwork)) install.packages("bayestestR"); library(patchwork)
 
 # Load results from comparisons --------
 real_dat_res <- readRDS("output/real_data/real_data_results.RDS")
 fin_sol <- readRDS("output/real_data/real_data_fin_sol.RDS")
+fac_con_dat <- readRDS("output/real_data/fac_con_dat.RDS")
+diff_load <- readRDS("output/real_data/diff_load.RDS")
 
 # First check if a final solution was found for all datasets ----
 no_sol <- which(is.na(real_dat_res$nfac_final)); no_sol
@@ -51,15 +54,14 @@ real_dat_res[real_dat_res$comm_meth_psych != real_dat_res$comm_meth_spss, ]
 # -> No, no further analyses here.
 
 
-# Differences in variable-to-factor corresponences -----
+# Differences in variable-to-factor correspondences -----
 
-# Absolute number and relative to whole 230 analyzed datastes
+# Absolute number and relative to all datasets with admissible solutions
 sum(real_dat_res$diff_corres > 0) / nrow(real_dat_res)
 
 table(real_dat_res$diff_corres) / nrow(real_dat_res)
 
 # Include only solutions with minimum 2 factors
-
 nrow(real_dat_res[real_dat_res$nfac_final > 1, ]) # How many solutions?
 
 sum(real_dat_res$diff_corres[real_dat_res$nfac_final > 1] > 0) / nrow(real_dat_res[real_dat_res$nfac_final > 1, ])
@@ -85,56 +87,144 @@ hist(real_dat_res$cross_spss / real_dat_res$nind)
 
 
 # Differences in loadings ----- 
-mean(real_dat_res$md_diff)
 
-mean(real_dat_res$m_diff)
-sd(real_dat_res$m_diff)
-min(real_dat_res$m_diff)
-max(real_dat_res$m_diff)
+# PAF (unrotated loadings)
+paf_load_diff <- real_dat_res %>% 
+  select(md_diff_paf, m_diff_paf, max_diff_paf) %>% 
+  summarize(mean_md = mean(md_diff_paf),
+            mean_m = mean(m_diff_paf),
+            sd_m = sd(m_diff_paf),
+            min_m = min(m_diff_paf),
+            max_m = max(m_diff_paf),
+            mean_max = mean(max_diff_paf),
+            sd_max = sd(max_diff_paf),
+            min_max = min(max_diff_paf),
+            max_max = max(max_diff_paf))
 
-mean(real_dat_res$max_diff)
-sd(real_dat_res$max_diff)
-min(real_dat_res$max_diff)
-max(real_dat_res$max_diff)
+min(abs(diff_load$values[diff_load$procedure == "PAF"]), na.rm = TRUE)
 
-real_dat_res$datname[which(real_dat_res$max_diff > .3)]
+var_load_diff <- real_dat_res %>% 
+  select(md_diff_var, m_diff_var, max_diff_var) %>% 
+  summarize(mean_md = mean(md_diff_var),
+            mean_m = mean(m_diff_var),
+            sd_m = sd(m_diff_var),
+            min_m = min(m_diff_var),
+            max_m = max(m_diff_var),
+            mean_max = mean(max_diff_var),
+            sd_max = sd(max_diff_var),
+            min_max = min(max_diff_var),
+            max_max = max(max_diff_var))
+
+min(abs(diff_load$values[diff_load$procedure == "Varimax"]), na.rm = TRUE)
+
+pro_load_diff <- real_dat_res %>% 
+  select(md_diff_pro, m_diff_pro, max_diff_pro) %>% 
+  summarize(mean_md = mean(md_diff_pro),
+            mean_m = mean(m_diff_pro),
+            sd_m = sd(m_diff_pro),
+            min_m = min(m_diff_pro),
+            max_m = max(m_diff_pro),
+            mean_max = mean(max_diff_pro),
+            sd_max = sd(max_diff_pro),
+            min_max = min(max_diff_pro),
+            max_max = max(max_diff_pro))
+
+min(abs(diff_load$values[diff_load$procedure == "Promax"]), na.rm = TRUE)
+
+real_dat_res$datname[which(real_dat_res$max_diff_pro > .3)]
+
 
 # Plot differences in loadings
 
 # Median differences
-hist(real_dat_res$md_diff, breaks = 100)
+hist(real_dat_res$md_diff_pro, breaks = 100)
 
 # Mean and maximum differences
-pdf("plots/delta_load_real_data.pdf", height = 4, width = 5)
-real_dat_res %>%
-  select(m_diff, max_diff) %>%
-  pivot_longer(everything(), names_to = "diff", values_to = "values") %>%
-  mutate(diff = case_when(diff == "m_diff" ~ "Mean",
-                          diff == "max_diff" ~ "Maximum"),
-         diff = factor(diff, levels = c("Mean", "Maximum"))) %>%
-  ggplot(aes(x = diff, y = values, fill = "A")) +
-  geom_violindot(size_dots = 2, binwidth = 0.001, color_dots = viridis(1),
-                 fill_dots = viridis(1)) +
+diff_plot <- diff_load %>%
+  mutate(values = abs(values),
+         statistic = factor(group, levels = c("Overall", "Mean", "Maximum")),
+         procedure = factor(procedure, levels = c("PAF", "Varimax", "Promax"))) %>%
+  ggplot(aes(x = statistic, y = values, fill = "A")) +
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, color = viridis(1)) +
+  geom_violin(size = 0.5, color = viridis(1), fill = alpha(viridis(1), 0.3)) +
   scale_fill_manual(values = viridis(1, begin = .2, alpha = .7)) +
-  geom_segment(x = 1, xend = 1.45, y = mean(real_dat_res$m_diff), 
-               yend = mean(real_dat_res$m_diff), col = "white", linetype = 2) +
-  geom_segment(x = 2, xend = 2.1, y = mean(real_dat_res$max_diff), 
-               yend = mean(real_dat_res$max_diff), col = "white", linetype = 2) +
   scale_y_continuous(breaks = seq(0, 0.7, 0.05)) +
-  labs(x = "", y = "Differences in Pattern Coefficients") +
+  facet_wrap(vars(procedure), ncol = 3) +
+  stat_summary(fun = "mean", geom = "point", shape = 23, fill = "white") +
+  labs(x = "", y = "Differences in Loadings") +
   theme_bw() +
   theme(legend.position = "none",
-        axis.text.x = element_text(size = 12),
+        axis.text.x = element_text(size = 12, color = "black"),
         axis.title.y = element_text(size = 12),
-        axis.text.y = element_text(size = 10))
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.ticks = element_line(color = "black"),
+        strip.background = element_blank(),
+        strip.text = element_text(size = 12, face = "bold"),
+        panel.grid.major.x = element_blank())
+
+## Factor congruence ----
+
+# Calculate mean and min factor congruence
+fac_con_paf <- real_dat_res %>% 
+  select(m_fac_con_paf, min_fac_con_paf) %>% 
+  summarize(mean_m = mean(m_fac_con_paf),
+            min_m = min(m_fac_con_paf),
+            mean_min = mean(min_fac_con_paf),
+            min_min = min(min_fac_con_paf))
+
+max(abs(fac_con_dat$values[fac_con_dat$procedure == "PAF"]), na.rm = TRUE)
+
+fac_con_var <- real_dat_res %>% 
+  select(m_fac_con_var, min_fac_con_var) %>% 
+  summarize(mean_m = mean(m_fac_con_var),
+            min_m = min(m_fac_con_var),
+            mean_min = mean(min_fac_con_var),
+            min_min = min(min_fac_con_var))
+
+max(abs(fac_con_dat$values[fac_con_dat$procedure == "Varimax"]), na.rm = TRUE)
+
+fac_con_pro <- real_dat_res %>% 
+  select(m_fac_con_pro, min_fac_con_pro) %>% 
+  summarize(mean_m = mean(m_fac_con_pro),
+            min_m = min(m_fac_con_pro),
+            mean_min = mean(min_fac_con_pro),
+            min_min = min(min_fac_con_pro))
+
+max(abs(fac_con_dat$values[fac_con_dat$procedure == "Promax"]), na.rm = TRUE)
+
+
+fac_con_plot <- fac_con_dat %>%
+  mutate(statistic = factor(group, levels = c("Overall", "Mean", "Minimum")),
+         procedure = factor(procedure, levels = c("PAF", "Varimax", "Promax"))) %>%
+  ggplot(aes(x = statistic, y = values, fill = "A")) +
+  geom_jitter(height = 0, width = 0.1, alpha = 0.5, color = viridis(1)) +
+  geom_violin(size = 0.5, color = viridis(1), fill = alpha(viridis(1), 0.3)) +
+  scale_fill_manual(values = viridis(1, begin = .2, alpha = .7)) +
+  scale_y_continuous(breaks = seq(0, 1, 0.1)) +
+  facet_wrap(vars(procedure), ncol = 3) +
+  stat_summary(fun = "mean", geom = "point", shape = 23, fill = "white") +
+  labs(x = "", y = "Factor Congruence") +
+  theme_bw() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12, color = "black"),
+        axis.title.y = element_text(size = 12),
+        axis.text.y = element_text(size = 10, color = "black"),
+        axis.ticks = element_line(color = "black"),
+        strip.background = element_blank(),
+        strip.text = element_text(size = 12, face = "bold"),
+        panel.grid.major.x = element_blank())
+
+# Combine plots
+pdf("plots/diffload_faccon_real_data.pdf", height = 7, width = 8)
+diff_plot / fac_con_plot
 dev.off()
 
-# Only for those with variable-to-factor ratio < .3
+# Differences only for those with variable-to-factor ratio < .3
 
 # Mean differences
-ggplot(real_dat_res[real_dat_res$var_fac_ratio >= 3, ], aes(x = m_diff)) +
+ggplot(real_dat_res[real_dat_res$var_fac_ratio >= 3, ], aes(x = m_diff_pro)) +
   geom_histogram(aes(y = (..count..)/sum(..count..)), binwidth = .001) +
-  geom_segment(x = mean(real_dat_res$m_diff), xend = mean(real_dat_res$m_diff),
+  geom_segment(x = mean(real_dat_res$m_diff_pro), xend = mean(real_dat_res$m_diff_pro),
                y = 0, yend = .2, col = "red", linetype = 2) +
   scale_x_continuous(name = "Mean Differences in Loadings",
                      breaks = seq(0, .2, .01)) +
@@ -143,9 +233,9 @@ ggplot(real_dat_res[real_dat_res$var_fac_ratio >= 3, ], aes(x = m_diff)) +
   theme_bw()
 
 # Maximum differences
-ggplot(real_dat_res[real_dat_res$var_fac_ratio >= 3, ], aes(x = max_diff)) +
+ggplot(real_dat_res[real_dat_res$var_fac_ratio >= 3, ], aes(x = max_diff_pro)) +
   geom_histogram(aes(y = (..count..)/sum(..count..)), binwidth = .003) +
-  geom_segment(x = mean(real_dat_res$max_diff), xend = mean(real_dat_res$max_diff),
+  geom_segment(x = mean(real_dat_res$max_diff_pro), xend = mean(real_dat_res$max_diff_pro),
                y = 0, yend = .2, col = "red", linetype = 2) +
   scale_x_continuous(name = "Maximum Differences in Loadings",
                      breaks = seq(0, .5, .05)) +
@@ -153,29 +243,29 @@ ggplot(real_dat_res[real_dat_res$var_fac_ratio >= 3, ], aes(x = max_diff)) +
                      breaks = seq(0, .5, .01)) +
   theme_bw()
 
-# See if differences are related to some properties of the data sets
+# See if differences are related to some properties of the data sets -----
 
 # Preliminary regression analyses
 
 # Variable-to-factor ratio
 
 # Mean differences
-summary(lm(m_diff ~ var_fac_ratio, real_dat_res))
-plot(lm(m_diff ~ var_fac_ratio, real_dat_res))
+summary(lm(m_diff_pro ~ var_fac_ratio, real_dat_res))
+plot(lm(m_diff_pro ~ var_fac_ratio, real_dat_res))
 
-cor(real_dat_res$var_fac_ratio, real_dat_res$m_diff,
+cor(real_dat_res$var_fac_ratio, real_dat_res$m_diff_pro,
     method = "spearman")
 
-plot(real_dat_res$var_fac_ratio, real_dat_res$m_diff)
+plot(real_dat_res$var_fac_ratio, real_dat_res$m_diff_pro)
 
 # Maximum differences
-summary(lm(max_diff ~ var_fac_ratio, real_dat_res))
-plot(lm(max_diff ~ var_fac_ratio, real_dat_res))
+summary(lm(max_diff_pro ~ var_fac_ratio, real_dat_res))
+plot(lm(max_diff_pro ~ var_fac_ratio, real_dat_res))
 
-cor(real_dat_res$var_fac_ratio, real_dat_res$max_diff,
+cor(real_dat_res$var_fac_ratio, real_dat_res$max_diff_pro,
     method = "spearman")
 
-plot(real_dat_res$var_fac_ratio, real_dat_res$max_diff)
+plot(real_dat_res$var_fac_ratio, real_dat_res$max_diff_pro)
 
 # Sample size-to-factor ratio
 
@@ -185,62 +275,62 @@ real_dat_res$N_fac_ratio_log <- log10(real_dat_res$N_fac_ratio)
 hist_n_fac_ratio_log <- hist(real_dat_res$N_fac_ratio_log)
 
 # Mean differences
-summary(lm(m_diff ~ N_fac_ratio_log, real_dat_res))
-plot(lm(m_diff ~ N_fac_ratio_log, real_dat_res))
+summary(lm(m_diff_pro ~ N_fac_ratio_log, real_dat_res))
+plot(lm(m_diff_pro ~ N_fac_ratio_log, real_dat_res))
 
-cor(real_dat_res$N_fac_ratio_log, real_dat_res$m_diff,
+cor(real_dat_res$N_fac_ratio_log, real_dat_res$m_diff_pro,
     method = "spearman", use = "pairwise")
 
-plot(real_dat_res$N_fac_ratio_log, real_dat_res$m_diff)
+plot(real_dat_res$N_fac_ratio_log, real_dat_res$m_diff_pro)
 
 # Maximum differences
-summary(lm(max_diff ~ N_fac_ratio_log, real_dat_res))
-plot(lm(max_diff ~ N_fac_ratio_log, real_dat_res))
+summary(lm(max_diff_pro ~ N_fac_ratio_log, real_dat_res))
+plot(lm(max_diff_pro ~ N_fac_ratio_log, real_dat_res))
 
-cor(real_dat_res$N_fac_ratio_log, real_dat_res$max_diff,
+cor(real_dat_res$N_fac_ratio_log, real_dat_res$max_diff_pro,
     method = "spearman", use = "pairwise")
 
-plot(real_dat_res$N_fac_ratio_log, real_dat_res$max_diff)
+plot(real_dat_res$N_fac_ratio_log, real_dat_res$max_diff_pro)
 
 # Communalities
 
 # Mean differences
-summary(lm(m_diff ~ m_h2, real_dat_res))
-plot(lm(m_diff ~ m_h2, real_dat_res))
+summary(lm(m_diff_pro ~ m_h2, real_dat_res))
+plot(lm(m_diff_pro ~ m_h2, real_dat_res))
 
-cor(real_dat_res$m_h2, real_dat_res$m_diff,
+cor(real_dat_res$m_h2, real_dat_res$m_diff_pro,
     method = "spearman", use = "pairwise")
 
-plot(real_dat_res$m_h2, real_dat_res$m_diff)
+plot(real_dat_res$m_h2, real_dat_res$m_diff_pro)
 
 # Maximum differences
-summary(lm(max_diff ~ m_h2, real_dat_res))
-plot(lm(max_diff ~ m_h2, real_dat_res))
+summary(lm(max_diff_pro ~ m_h2, real_dat_res))
+plot(lm(max_diff_pro ~ m_h2, real_dat_res))
 
-cor(real_dat_res$m_h2, real_dat_res$max_diff,
+cor(real_dat_res$m_h2, real_dat_res$max_diff_pro,
     method = "spearman", use = "pairwise")
 
-plot(real_dat_res$m_h2, real_dat_res$max_diff)
+plot(real_dat_res$m_h2, real_dat_res$max_diff_pro)
 
 # Factor intercorrelations
 
 # Mean differences
-summary(lm(m_diff ~ m_fac_cor, real_dat_res))
-plot(lm(m_diff ~ m_fac_cor, real_dat_res))
+summary(lm(m_diff_pro ~ m_fac_cor, real_dat_res))
+plot(lm(m_diff_pro ~ m_fac_cor, real_dat_res))
 
-cor(real_dat_res$m_fac_cor, real_dat_res$m_diff,
+cor(real_dat_res$m_fac_cor, real_dat_res$m_diff_pro,
     method = "spearman", use = "pairwise")
 
-plot(real_dat_res$m_fac_cor, real_dat_res$m_diff)
+plot(real_dat_res$m_fac_cor, real_dat_res$m_diff_pro)
 
 # Maximum differences
-summary(lm(max_diff ~ m_fac_cor, real_dat_res))
-plot(lm(max_diff ~ m_fac_cor, real_dat_res))
+summary(lm(max_diff_pro ~ m_fac_cor, real_dat_res))
+plot(lm(max_diff_pro ~ m_fac_cor, real_dat_res))
 
-cor(real_dat_res$m_fac_cor, real_dat_res$max_diff,
+cor(real_dat_res$m_fac_cor, real_dat_res$max_diff_pro,
     method = "spearman", use = "pairwise")
 
-plot(real_dat_res$m_fac_cor, real_dat_res$max_diff)
+plot(real_dat_res$m_fac_cor, real_dat_res$max_diff_pro)
 
 
 # Bayesian regression analyses
@@ -248,7 +338,7 @@ plot(real_dat_res$m_fac_cor, real_dat_res$max_diff)
 # Variable-to-factor ratio
 
 # Mean differences
-mod_var_fac_m <- stan_glm(m_diff + 0.0001 ~ var_fac_ratio,
+mod_var_fac_m <- stan_glm(m_diff_pro + 0.0001 ~ var_fac_ratio,
                 data = real_dat_res, cores = 1,
                 chains = 4, iter = 15000, family = Gamma(link = "log"),
                 prior_intercept = normal(location = 0, scale = 10),
@@ -257,7 +347,7 @@ mod_var_fac_m <- stan_glm(m_diff + 0.0001 ~ var_fac_ratio,
 describe_posterior(mod_var_fac_m, ci = .95, rope_ci = 1)
 
 # Maximum differences
-mod_var_fac_max <- stan_glm(max_diff + 0.0001 ~ var_fac_ratio,
+mod_var_fac_max <- stan_glm(max_diff_pro + 0.0001 ~ var_fac_ratio,
                           data = real_dat_res, cores = 1,
                           chains = 4, iter = 15000, family = Gamma(link = "log"),
                           prior_intercept = normal(location = 0, scale = 10),
@@ -268,7 +358,7 @@ describe_posterior(mod_var_fac_max, ci = .95, rope_ci = 1)
 # Sample size-to-factor ratio
 
 # Mean differences
-mod_N_fac_m <- stan_glm(m_diff + 0.0001 ~ N_fac_ratio_log,
+mod_N_fac_m <- stan_glm(m_diff_pro + 0.0001 ~ N_fac_ratio_log,
                         data = real_dat_res, cores = 1,
                         chains = 4, iter = 15000, family = Gamma(link = "log"),
                         prior_intercept = normal(location = 0, scale = 10),
@@ -277,7 +367,7 @@ mod_N_fac_m <- stan_glm(m_diff + 0.0001 ~ N_fac_ratio_log,
 describe_posterior(mod_N_fac_m, ci = .95, rope_ci = 1)
 
 # Maximum differences
-mod_N_fac_max <- stan_glm(max_diff + 0.0001 ~ N_fac_ratio_log,
+mod_N_fac_max <- stan_glm(max_diff_pro + 0.0001 ~ N_fac_ratio_log,
                           data = real_dat_res, cores = 1,
                           chains = 4, iter = 15000, family = Gamma(link = "log"),
                           prior_intercept = normal(location = 0, scale = 10),
@@ -288,7 +378,7 @@ describe_posterior(mod_N_fac_max, ci = .95, rope_ci = 1)
 # Communalities
 
 # Mean differences
-mod_h2_m <- stan_glm(m_diff + 0.0001 ~ m_h2,
+mod_h2_m <- stan_glm(m_diff_pro + 0.0001 ~ m_h2,
                         data = real_dat_res, cores = 1,
                         chains = 4, iter = 15000, family = Gamma(link = "log"),
                         prior_intercept = normal(location = 0, scale = 10),
@@ -297,7 +387,7 @@ mod_h2_m <- stan_glm(m_diff + 0.0001 ~ m_h2,
 describe_posterior(mod_h2_m, ci = .95, rope_ci = 1)
 
 # Maximum differences
-mod_h2_max <- stan_glm(max_diff + 0.0001 ~ m_h2,
+mod_h2_max <- stan_glm(max_diff_pro + 0.0001 ~ m_h2,
                           data = real_dat_res, cores = 1,
                           chains = 4, iter = 15000, family = Gamma(link = "log"),
                           prior_intercept = normal(location = 0, scale = 10),
@@ -308,7 +398,7 @@ describe_posterior(mod_h2_max, ci = .95, rope_ci = 1)
 # Factor intercorrelations
 
 # Mean differences
-mod_fac_cor_m <- stan_glm(m_diff + 0.0001 ~ m_fac_cor,
+mod_fac_cor_m <- stan_glm(m_diff_pro + 0.0001 ~ m_fac_cor,
                      data = real_dat_res, cores = 1,
                      chains = 4, iter = 15000, family = Gamma(link = "log"),
                      prior_intercept = normal(location = 0, scale = 10),
@@ -317,7 +407,7 @@ mod_fac_cor_m <- stan_glm(m_diff + 0.0001 ~ m_fac_cor,
 describe_posterior(mod_fac_cor_m, ci = .95, rope_ci = 1)
 
 # Maximum differences
-mod_fac_cor_max <- stan_glm(max_diff + 0.0001 ~ m_fac_cor,
+mod_fac_cor_max <- stan_glm(max_diff_pro + 0.0001 ~ m_fac_cor,
                        data = real_dat_res, cores = 1,
                        chains = 4, iter = 15000, family = Gamma(link = "log"),
                        prior_intercept = normal(location = 0, scale = 10),
@@ -337,7 +427,7 @@ for(i in names(fin_sol)){
   temp <- fin_sol[[i]]$psych$Phi
   temp <- as.vector(temp[lower.tri(temp)])
   phi_list[[i]] <- data.frame(data = i, Phi = temp, diff_corres = 
-                                fin_sol[[i]]$diff_psych_spss$diff_corres)
+                                fin_sol[[i]]$diff_psych_spss_pro$diff_corres)
   }
 }
 
@@ -404,3 +494,6 @@ phi_dat %>%
   ggplot(aes(x = max_phi, y = diff_corres)) +
   geom_point() +
   geom_smooth(method = "gam")
+
+
+

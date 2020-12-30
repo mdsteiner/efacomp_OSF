@@ -2,8 +2,6 @@
 
 # Load packages where datasets are in
 if (!require(psych)) install.packages("psych"); library(psych)
-# devtools is needed to install EFAtools
-if (!require(devtools)) install.packages("devtools"); library(devtools)
 if (!require(EFAtools)) install.packages("EFAtools"); library(EFAtools)
 future::plan(future::multisession) # to parallelize parallel analysis
 if (!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
@@ -57,7 +55,8 @@ nfac_dat <- c(5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, # WISC-V
               4, 3, 3, 10, 10, 3, 3, 3, 5, 7, 5, 6, 5, 5, 6, 8, 7, 6, 3, 4, 4, 
               NA, 2, 3, 3, 7, 7, 8, 11, 6, 3, 7, 2, 2, 3, 5, 8, 9, 1, 1, 1, 
               7, 4, 11, # HCA (Carroll, 1993)
-              6, 6, 5, 30, 5, 5, 5, 1, 2, 4, 5, 4, 7, 30, 45, 5, 4, 6 # other
+              3, 6, 6, 5, 30, 4, 3, 1, 1, 5, 5, 5, 3, 1, 1, 2, 4, 5, 4, 7, 1,
+              30, 45, 1, 1, 5, 4, 4, 4, 5, NA, 5, 4, 5, 5# other
               ) 
 names(nfac_dat) <- names_dat
 
@@ -74,17 +73,17 @@ names(nfac_dat) <- names_dat
 #   temp_pa <- try(PARALLEL(temp_dat[[1]], N = temp_dat[[2]], eigen_type = "SMC",
 #                           n_datasets = 1000, decision_rule = "crawford"),
 #                  silent = TRUE)
-#   
+# 
 #   if(class(temp_pa) == "try-error"){
 # 
 #     nfac_pa[i] <- NA
 #     tryerror[i] <- 1
-#     
+# 
 #   } else {
-#     
+# 
 #     nfac_pa[i] <- temp_pa$n_fac_SMC
 #     tryerror[i] <- 0
-#     
+# 
 #   }
 # 
 # }
@@ -123,13 +122,15 @@ sum(is.na(nfac_max))
 # Prinicpal axis factor analyses with psych and SPSS settings ----------------
 
 # Perform PAF with promax with type = psych and type = SPSS 
-# (both with 1e^6 iterations) for each dataset, starting from the determined 
+# (both with maximum 1e^6 iterations) for each dataset, starting from the determined 
 # number of factors and continuing until a solution is found that works with 
 # both types (convergence, no Heywood cases and at least two salient loadings 
 # per factor)
 
 fin_sol <- list()
 res_psych_spss <- list()
+fac_con_dat <- list()
+diff_load <- list()
 
 for(i in 1:length(names_dat)){
 
@@ -243,12 +244,31 @@ for(i in 1:length(names_dat)){
   
   }
 
-  diff_psych_spss <- NA
+  diff_psych_spss_paf <- NA
+  diff_psych_spss_var <- NA
+  diff_psych_spss_pro <- NA
+  m_diff_paf <- NA
+  md_diff_paf <- NA
+  min_diff_paf <- NA
+  max_diff_paf <- NA
+  m_diff_var <- NA
+  md_diff_var <- NA
+  min_diff_var <- NA
+  max_diff_var <- NA
+  m_diff_pro <- NA
+  md_diff_pro <- NA
+  min_diff_pro <- NA
+  max_diff_pro <- NA
   diff_corres <- NA
-  m_diff <- NA
-  md_diff <- NA
-  min_diff <- NA
-  max_diff <- NA
+  fac_con_paf <- NA
+  fac_con_var <- NA
+  fac_con_pro <- NA
+  m_fac_con_paf <- NA
+  m_fac_con_var <- NA
+  m_fac_con_pro <- NA
+  min_fac_con_paf <- NA
+  min_fac_con_var <- NA
+  min_fac_con_pro <- NA
   var_fac_ratio <- NA
   N_fac_ratio <- NA
   m_h2 <- NA
@@ -260,14 +280,54 @@ for(i in 1:length(names_dat)){
 
   # After final solutions are found --------
   if(class(efa_psych) != "try-error" & class(efa_spss) != "try-error") {
+    
+    # Calculate varimax solution
+    var_psych <- EFAtools:::.VARIMAX(efa_psych, type = "psych")
+    var_spss <- EFAtools:::.VARIMAX(efa_spss, type = "psych")
   
     # Calculate differences in loadings and variable-to-factor-correspondences
-    diff_psych_spss <- COMPARE(efa_psych$rot_loadings, efa_spss$rot_loadings)
-    diff_corres <- diff_psych_spss$diff_corres
-    m_diff <- diff_psych_spss$mean_abs_diff
-    md_diff <- diff_psych_spss$median_abs_diff
-    min_diff <- diff_psych_spss$min_abs_diff
-    max_diff <- diff_psych_spss$max_abs_diff
+    diff_psych_spss_paf <- COMPARE(efa_psych$unrot_loadings, efa_spss$unrot_loadings)
+    diff_psych_spss_var <- COMPARE(var_psych$rot_loadings, var_spss$rot_loadings)
+    diff_psych_spss_pro <- COMPARE(efa_psych$rot_loadings, efa_spss$rot_loadings)
+
+    m_diff_paf <- diff_psych_spss_paf$mean_abs_diff
+    md_diff_paf <- diff_psych_spss_paf$median_abs_diff
+    min_diff_paf <- diff_psych_spss_paf$min_abs_diff
+    max_diff_paf <- diff_psych_spss_paf$max_abs_diff
+    
+    m_diff_var <- diff_psych_spss_var$mean_abs_diff
+    md_diff_var <- diff_psych_spss_var$median_abs_diff
+    min_diff_var <- diff_psych_spss_var$min_abs_diff
+    max_diff_var <- diff_psych_spss_var$max_abs_diff
+    
+    m_diff_pro <- diff_psych_spss_pro$mean_abs_diff
+    md_diff_pro <- diff_psych_spss_pro$median_abs_diff
+    min_diff_pro <- diff_psych_spss_pro$min_abs_diff
+    max_diff_pro <- diff_psych_spss_pro$max_abs_diff
+    
+    diff_corres <- diff_psych_spss_pro$diff_corres
+    
+    diff_paf_vec <- as.vector(diff_psych_spss_paf$diff)
+    diff_var_vec <- as.vector(diff_psych_spss_var$diff)
+    diff_pro_vec <- as.vector(diff_psych_spss_pro$diff)
+    
+    # Calculate factor congruence
+    fac_con_paf <- apply(EFAtools:::.factor_congruence(efa_psych$unrot_loadings,
+                                                      efa_spss$unrot_loadings),
+                         1, max)
+    fac_con_var <- apply(EFAtools:::.factor_congruence(var_psych$rot_loadings,
+                                                      var_spss$rot_loadings),
+                         1, max)
+    fac_con_pro <- apply(EFAtools:::.factor_congruence(efa_psych$rot_loadings, 
+                                                      efa_spss$rot_loadings),
+                         1, max)
+    
+    m_fac_con_paf <- mean(fac_con_paf)
+    m_fac_con_var <- mean(fac_con_var)
+    m_fac_con_pro <- mean(fac_con_pro)
+    min_fac_con_paf <- min(fac_con_paf)
+    min_fac_con_var <- min(fac_con_var)
+    min_fac_con_pro <- min(fac_con_pro)
     
     # Calculate variable-to-factor ratio, N-to-fac ratio, mean communality, and
     # mean factor intercorrelation
@@ -304,10 +364,49 @@ for(i in 1:length(names_dat)){
     efa_spss <- NA
     
   }
+  
+  # Create dataframe for loadings differences 
+  diff_load[[i]] <- data.frame(datname = rep(names_dat[i], 
+                                             (length(diff_paf_vec)*3 + 6)),
+                               values = c(diff_paf_vec, m_diff_paf,
+                                          max_diff_paf,
+                                          diff_var_vec, m_diff_var,
+                                          max_diff_var,
+                                          diff_pro_vec, m_diff_pro,
+                                          max_diff_pro),
+                               procedure = c(rep("PAF", (length(diff_paf_vec) 
+                                                         + 2)),
+                                             rep("Varimax", (length(diff_var_vec) 
+                                                             + 2)),
+                                             rep("Promax", (length(diff_pro_vec) 
+                                                            + 2))),
+                               group = rep(c(rep("Overall", length(diff_paf_vec)),
+                                             "Mean", "Maximum"), 3))
 
+  # Create dataframe for factor congruences 
+  fac_con_dat[[i]] <- data.frame(datname = rep(names_dat[i], 
+                                               (length(fac_con_paf)*3 + 6)),
+                                 values = c(fac_con_paf, m_fac_con_paf,
+                                            min_fac_con_paf,
+                                            fac_con_var, m_fac_con_var,
+                                            min_fac_con_var,
+                                            fac_con_pro, m_fac_con_pro,
+                                            min_fac_con_pro),
+                                 procedure = c(rep("PAF", (length(fac_con_paf) 
+                                                           + 2)),
+                                               rep("Varimax", (length(fac_con_var) 
+                                                               + 2)),
+                                               rep("Promax", (length(fac_con_var) 
+                                                              + 2))),
+                                 group = rep(c(rep("Overall", length(fac_con_paf)),
+                                               "Mean", "Minimum"), 3))
+  
   # Create a list for each dataset (names of datasets as names) with
   fin_sol[[names_dat[i]]] <- list(psych = efa_psych, 
-                       spss = efa_spss, diff_psych_spss = diff_psych_spss)
+                                  spss = efa_spss, 
+                                  diff_psych_spss_paf = diff_psych_spss_paf,
+                                  diff_psych_spss_var = diff_psych_spss_var,
+                                  diff_psych_spss_pro = diff_psych_spss_pro)
 
   # Create dataframe ------------
   
@@ -332,16 +431,33 @@ for(i in 1:length(names_dat)){
                               cross_psych = cross_psych,
                               cross_spss = cross_spss,
                               diff_corres = diff_corres,
-                              m_diff = m_diff,
-                              md_diff = md_diff,
-                              min_diff = min_diff,
-                              max_diff = max_diff)
+                              m_diff_paf = m_diff_paf,
+                              m_diff_var = m_diff_var,
+                              m_diff_pro = m_diff_pro,
+                              md_diff_paf = md_diff_paf,
+                              md_diff_var = md_diff_var,
+                              md_diff_pro = md_diff_pro,
+                              min_diff_paf = min_diff_paf,
+                              min_diff_var = min_diff_var,
+                              min_diff_pro = min_diff_pro,
+                              max_diff_paf = max_diff_paf,
+                              max_diff_var = max_diff_var,
+                              max_diff_pro = max_diff_pro,
+                              m_fac_con_paf = m_fac_con_paf,
+                              m_fac_con_var = m_fac_con_var,
+                              m_fac_con_pro = m_fac_con_pro,
+                              min_fac_con_paf = min_fac_con_paf,
+                              min_fac_con_var = min_fac_con_var,
+                              min_fac_con_pro = min_fac_con_pro)
 
 }
 
 real_data_results <- do.call("rbind", res_psych_spss)
+fac_con_dat <- do.call("rbind", fac_con_dat)
+diff_load <- do.call("rbind", diff_load)
   
 # Save output -----
 saveRDS(real_data_results, file = "output/real_data/real_data_results.RDS")
+saveRDS(fac_con_dat, file = "output/real_data/fac_con_dat.RDS")
 saveRDS(fin_sol, file = "output/real_data/real_data_fin_sol.RDS")
-  
+saveRDS(diff_load, file = "output/real_data/diff_load.RDS")

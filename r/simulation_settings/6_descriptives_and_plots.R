@@ -4,6 +4,12 @@ if(!require(tidyverse)) install.packages("tidyverse"); library(tidyverse)
 if(!require(EFAtools)) install.packages("EFAtools"); library(EFAtools)
 if(!require(stringr)) install.packages("stringr"); library(stringr)
 
+names_cases <- c("18|3|6", "6|3|6", "9|3|6", "12|3|6", "15|3|6", "18|3|3",
+                 "18|3|9", "18|3|369b", "18|3|369w", "18|3|46|1c", "18|3|46|3c",
+                 "12|3m|6", "18|3|6n", "6|3|369wb", "9|3|369wb", "12|3|369wb",
+                 "15|3|369wb", "12|6|6", "18|6|6", "24|6|6", "30|6|6", "36|6|6",
+                 "12|6|369wb", "18|6|369wb", "24|6|369wb", "30|6|369wb", "36|6|369w")
+
 model_control <- expand.grid(
   case = names(population_models$loadings)[1:27],
   cors = names(population_models$phis_3),
@@ -258,7 +264,7 @@ recovery <- recovery %>%
   bind_rows(recovery2) %>% 
   mutate(setting_id = case_when(setting_id %in% c(108, 106) ~ "R psych",
                                 setting_id == 171 ~"SPSS",
-                                setting_id == 150 ~ "best general"))
+                                setting_id == 150 ~ "Best"))
 
 rm(recovery2)
 
@@ -315,7 +321,7 @@ recovery_450 <- recovery_450 %>%
   bind_rows(recovery2) %>% 
   mutate(setting_id = case_when(setting_id %in% c(108, 106) ~ "R psych",
                                 setting_id == 171 ~"SPSS",
-                                setting_id == 150 ~ "best general"))
+                                setting_id == 150 ~ "Best"))
 
 rm(recovery2)
 
@@ -351,11 +357,8 @@ temp_450 <- recovery_450 %>%
 pdf("plots/MRMSE_implementations_180.pdf", height = 7, width = 12)
 temp %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, m_g, fill = factor(setting_id))) +
@@ -388,11 +391,8 @@ dev.off()
 pdf("plots/MRMSE_implementations_450.pdf", height = 7, width = 12)
 temp_450 %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, m_g, fill = factor(setting_id))) +
@@ -427,11 +427,8 @@ pdf("plots/heywood_implementations_180.pdf", height = 7, width = 12)
 
 temp %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, m_h, fill = factor(setting_id))) +
@@ -458,11 +455,8 @@ dev.off()
 pdf("plots/heywood_implementations_450.pdf", height = 7, width = 12)
 temp_450 %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, m_h, fill = factor(setting_id))) +
@@ -491,11 +485,8 @@ dev.off()
 pdf("plots/VFC_implementations_180.pdf", height = 7, width = 12)
 temp %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, m_fc, fill = factor(setting_id))) +
@@ -528,11 +519,8 @@ dev.off()
 pdf("plots/VFC_implementations_450.pdf", height = 7, width = 12)
 temp_450 %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, m_fc, fill = factor(setting_id))) +
@@ -567,11 +555,8 @@ pdf("plots/VFC_p_implementations_180.pdf", height = 7, width = 12)
 
 temp %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, p_fc, fill = factor(setting_id))) +
@@ -598,11 +583,8 @@ dev.off()
 pdf("plots/VFC_p_implementations_450.pdf", height = 7, width = 12)
 temp_450 %>% 
   ungroup() %>% 
-  mutate(case = factor(case, levels = c("baseline", paste0(1, letters[1:5]), 2:5,
-                                        paste0(6, letters[1:2]), 7:8,
-                                        paste0(9, letters[1:5]),
-                                        paste0(10, letters[1:5]),
-                                        paste0(11, letters[1:5]))),
+  mutate(case = factor(case, levels = gsub("case_", "", names(population_models$loadings)[1:27]),
+                       labels = names_cases),
          cors = factor(cors, levels = c("zero", "moderate", "mixed", "strong"),
                        labels = c("Zero", "Moderate", "Mixed", "Strong"))) %>% 
   ggplot(aes(case, p_fc, fill = factor(setting_id))) +

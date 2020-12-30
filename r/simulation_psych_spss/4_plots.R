@@ -6,16 +6,22 @@ if(!require(stringr)) install.packages("stringr"); library(stringr)
 
 recovery <- readRDS("output/simulation_psych_spss/model_recovery_results.RDS")
 
+names_cases <- c("18|3|6", "6|3|6", "9|3|6", "12|3|6", "15|3|6", "18|3|3",
+                 "18|3|9", "18|3|369b", "18|3|369w", "18|3|46|1c", "18|3|46|3c",
+                 "12|3m|6", "18|3|6n", "6|3|369wb", "9|3|369wb", "12|3|369wb",
+                 "15|3|369wb", "12|6|6", "18|6|6", "24|6|6", "30|6|6", "36|6|6",
+                 "12|6|369wb", "18|6|369wb", "24|6|369wb", "30|6|369wb", "36|6|369w")
+
 case_colors <- viridis(12, end = .85)
 case_colors <- case_colors[c(1, rep(2, 4), 3:7, 7:9, rep(10, 4),
                              rep(11:12, each = 5))]
-names(case_colors) <- gsub("case_", " ", names(population_models$loadings[1:27]))
+names(case_colors) <- names_cases
 
 # plot the mean absolute differences in the loadings
 p1 <- recovery %>%
   filter(N == 180) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong"))) %>%
   ggplot(aes(case, m_delta_load_spss_psych, col = case)) +
@@ -40,7 +46,7 @@ p1 <- recovery %>%
 p2 <- recovery %>%
   filter(N == 180) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong")),
          delta_g = g_spss - g_psych) %>%
@@ -69,7 +75,7 @@ dev.off()
 p1 <- recovery %>%
   filter(N == 450) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong"))) %>%
   ggplot(aes(case, m_delta_load_spss_psych, col = case)) +
@@ -94,7 +100,7 @@ p1 <- recovery %>%
 p2 <- recovery %>%
   filter(N == 450) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong")),
          delta_g =  g_spss - g_psych) %>%
@@ -127,7 +133,7 @@ dev.off()
 p1 <- recovery %>%
   filter(N == 180) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong"))) %>%
   ggplot(aes(case, diff_factor_corres_spss_psych, col = case)) +
@@ -152,7 +158,7 @@ p1 <- recovery %>%
 p2 <- recovery %>%
   filter(N == 180) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong")),
          delta_factor_corres = diff_factor_corres_spss - diff_factor_corres_psych) %>%
@@ -182,7 +188,7 @@ dev.off()
 p1 <- recovery %>%
   filter(N == 450) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong"))) %>%
   ggplot(aes(case, diff_factor_corres_spss_psych, col = case)) +
@@ -207,7 +213,7 @@ p1 <- recovery %>%
 p2 <- recovery %>%
   filter(N == 450) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong")),
          delta_factor_corres = diff_factor_corres_spss - diff_factor_corres_psych) %>%
@@ -239,7 +245,7 @@ dev.off()
 p1 <- recovery %>%
   filter(N == 180) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong"))) %>%
   group_by(case, cors) %>% 
@@ -270,7 +276,7 @@ p1 <- recovery %>%
 p2 <- recovery %>%
   filter(N == 450) %>%
   mutate(case = factor(case, levels = names(population_models$loadings)[1:27],
-                       labels = gsub("case_", " ", names(population_models$loadings)[1:27])),
+                       labels = names_cases),
          cors = str_to_title(cors),
          cors = factor(cors, levels = c("Zero", "Moderate", "Mixed", "Strong"))) %>%
   group_by(case, cors) %>% 
