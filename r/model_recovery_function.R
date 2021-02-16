@@ -190,8 +190,8 @@ model_recovery <- function(i) {
       if (class(efa_psych) != "try-error") {
       
       # Check if there are at least two salient loadings per factor
-      salient_psych <- ifelse(nfact_i > 1, colSums(abs(efa_psych$rot_loadings) >= .30),
-                        colSums(abs(efa_psych$unrot_loadings) >= .30))
+      salient_psych <- ifelse(nfact_i > 1, colSums(abs(efa_psych$rot_loadings) >= .20),
+                        colSums(abs(efa_psych$unrot_loadings) >= .20))
       
       min_salient_psych <- ifelse(any(salient_psych < 2), FALSE, TRUE)
       
@@ -200,8 +200,8 @@ model_recovery <- function(i) {
       }
       
       if (class(efa_spss) != "try-error") {
-      salient_spss <- ifelse(nfact_i > 1, colSums(abs(efa_spss$rot_loadings) >= .30),
-                              colSums(abs(efa_spss$unrot_loadings) >= .30))
+      salient_spss <- ifelse(nfact_i > 1, colSums(abs(efa_spss$rot_loadings) >= .20),
+                              colSums(abs(efa_spss$unrot_loadings) >= .20))
       
       min_salient_spss <- ifelse(any(salient_spss < 2), FALSE, TRUE)
       } else {
@@ -211,7 +211,7 @@ model_recovery <- function(i) {
       # Save number of factors for first admissible solution in psych
       if(class(efa_psych) != "try-error" && min_salient_psych == TRUE && 
          all(efa_psych$h2 < .998) &&
-         all(abs(ifelse(nfact_i > 1, efa_psych$rot_loadings, efa_psych$unrot_loadings)) < .998) && 
+         all(abs(ifelse(nfact_i > 1, efa_psych$Structure, efa_psych$unrot_loadings)) < .998) && 
          is.na(nfac_admiss_psych)){
         
         nfac_admiss_psych <- ncol(efa_psych$unrot_loadings)
@@ -221,7 +221,7 @@ model_recovery <- function(i) {
       # Save number of factors for first admissible solution in SPSS
       if(class(efa_spss) != "try-error" && min_salient_spss == TRUE && 
          all(efa_spss$h2 < .998) &&
-         all(abs(ifelse(nfact_i > 1, efa_spss$rot_loadings, efa_spss$unrot_loadings)) < .998) && 
+         all(abs(ifelse(nfact_i > 1, efa_spss$Structure, efa_spss$unrot_loadings)) < .998) && 
          is.na(nfac_admiss_spss)){
         
         nfac_admiss_spss <- ncol(efa_spss$unrot_loadings)
@@ -264,8 +264,8 @@ model_recovery <- function(i) {
       init_spss <- "mac"
     }
     
-    heywood_spss <- any(efa_spss$h2 >= .998) && any(abs(efa_spss$rot_loadings) >= .998)
-    heywood_psych <- any(efa_psych$h2 >= .998) && any(abs(efa_psych$rot_loadings) >= .998)
+    heywood_spss <- any(efa_spss$h2 >= .998) || any(abs(ifelse(nfact_i > 1, efa_spss$Structure, efa_spss$unrot_loadings)) >= .998)
+    heywood_psych <- any(efa_psych$h2 >= .998) || any(abs(ifelse(nfact_i > 1, efa_psych$Structure, efa_psych$unrot_loadings)) >= .998)
     
     if(class(efa_psych) == "try-error" || heywood_psych){
       delta_var_expl_psych <- NA
@@ -284,7 +284,7 @@ model_recovery <- function(i) {
       }
       
     } else {
-      temp_psych <- COMPARE(temp_loadings, efa_psych$rot_load)
+      temp_psych <- COMPARE(temp_loadings, efa_psych$rot_load, thresh = .2)
       delta_var_expl_psych <- efa_psych$vars_accounted[3, n_factors] - true_var_expl
       g_psych <- temp_psych$g 
       m_delta_load_psych <- temp_psych$mean_abs_diff
@@ -311,7 +311,7 @@ model_recovery <- function(i) {
         iter_spss <- efa_spss$iter
       }
     } else {
-      temp_spss <- COMPARE(temp_loadings, efa_spss$rot_load)
+      temp_spss <- COMPARE(temp_loadings, efa_spss$rot_load, thresh = .2)
       delta_var_expl_spss <- efa_spss$vars_accounted[3, n_factors] - true_var_expl
       g_spss <- temp_spss$g
       m_delta_load_spss <- temp_spss$mean_abs_diff
@@ -327,7 +327,7 @@ model_recovery <- function(i) {
        class(efa_psych) != "try-error" && !heywood_psych) {
       
       # store differences between spss and psych result
-      temp_diff <- COMPARE(efa_spss$rot_load, efa_psych$rot_load)
+      temp_diff <- COMPARE(efa_spss$rot_load, efa_psych$rot_load, thresh = .2)
       m_delta_load_spss_psych <- temp_diff$mean_abs_diff
       min_delta_load_spss_psych <- temp_diff$min_abs_diff
       max_delta_load_spss_psych <- temp_diff$max_abs_diff
@@ -444,7 +444,7 @@ model_recovery_settings <- function(i) {
                        varimax_type = var_type_i))
       
       if(class(efa_i) == "try-error" || max(abs(efa_i$h2)) >= .998 ||
-         max(abs(efa_i$rot_loadings)) >= .998){
+         max(abs(efa_i$Structure)) >= .998){
         m_delta_load <- NA
         m_delta_cors <- NA
         diff_factor_corres <- NA
@@ -462,7 +462,7 @@ model_recovery_settings <- function(i) {
         
       } else {
         
-        temp_i <- COMPARE(temp_loadings, efa_i$rot_loadings)
+        temp_i <- COMPARE(temp_loadings, efa_i$rot_loadings, thresh = .2)
         m_delta_load <- temp_i$mean_abs_diff
         g <- temp_i$g
         diff_factor_corres <- temp_i$diff_corres

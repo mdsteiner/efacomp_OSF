@@ -6,7 +6,7 @@ if(!require(parallel)) install.packages("parallel"); library(parallel)
 if(!require(MASS)) install.packages("MASS"); library(MASS)
 
 
-setwd("/Users/msteiner/Documents/Doktorat/AJJ_OSF")
+setwd("/Users/msteiner/Documents/Doktorat/efacomp_OSF/")
 
 source("r/model_recovery_function.R")
 
