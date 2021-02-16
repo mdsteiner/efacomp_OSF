@@ -12,27 +12,27 @@ if(!require(stringr)) install.packages("stringr"); library(stringr)
 # Load data --------
 
 # WISC-V data (copy-right protected and therefore not made available)
-WISCV_filenames <- list.files("data/real_data/wisc/", pattern = ".RData", 
+WISCV_filenames <- list.files("data/wisc/", pattern = ".RData", 
                               full.names = TRUE)
 for (i in WISCV_filenames) load(i)
 
 # Human Cognitive Abilities project data (available at  http://www.iapsych.com/wmfhcaarchive/wmfhcaindex.html)
-HCA_filenames <- list.files("data/real_data/HCA/", pattern = ".RData", 
+HCA_filenames <- list.files("data/HCA/", pattern = ".RData", 
                          full.names = TRUE)
 for (i in HCA_filenames) load(i)
 
 # Other datasets from R (in EFAtools structure)
-other_filenames <- list.files("data/real_data/other_datasets/", pattern = ".RData", 
+other_filenames <- list.files("data/other_datasets/", pattern = ".RData", 
                           full.names = TRUE)
 for (i in other_filenames) load(i)
 
 # Get names of datasets 
-WISCV_names <- str_remove_all(WISCV_filenames, c("data/real_data/wisc//|.RData"))
+WISCV_names <- str_remove_all(WISCV_filenames, c("data/wisc//|.RData"))
 
-HCA_names <- str_remove_all(HCA_filenames, c("data/real_data/HCA//|.RData"))
+HCA_names <- str_remove_all(HCA_filenames, c("data/HCA//|.RData"))
 
 other_names <- str_remove_all(other_filenames, 
-                              c("data/real_data/other_datasets//|.RData"))
+                              c("data/other_datasets//|.RData"))
 
 # Create vector of dataset names and number of theoretical factors -----
 
@@ -183,7 +183,7 @@ for(i in 1:length(names_dat)){
     # Check if there are at least two salient loadings per factor
     salient_psych <- NULL
     for(j in 1:ncol(efa_psych$rot_loadings)) {
-      salient_psych[j] <- sum(abs(efa_psych$rot_loadings[, j]) >= .30)
+      salient_psych[j] <- sum(abs(efa_psych$rot_loadings[, j]) >= .20)
     }
     
     min_salient_psych <- ifelse(any(salient_psych < 2), FALSE, TRUE)
@@ -194,7 +194,7 @@ for(i in 1:length(names_dat)){
       
     salient_spss <- NULL
     for(j in 1:ncol(efa_spss$rot_loadings)){
-      salient_spss[j] <- sum(abs(efa_spss$rot_loadings[, j]) >= .30)
+      salient_spss[j] <- sum(abs(efa_spss$rot_loadings[, j]) >= .20)
     }
     
     min_salient_spss <- ifelse(any(salient_spss < 2), FALSE, TRUE)
@@ -203,7 +203,8 @@ for(i in 1:length(names_dat)){
     
     # Save number of factors for first admissible solution in psych
     if(class(efa_psych) != "try-error" && min_salient_psych == TRUE && 
-       all(efa_psych$h2 < .998) && all(efa_psych$rot_loadings < .998) && 
+       all(efa_psych$h2 < .998) &&  all(abs(ifelse(nfact > 1, efa_psych$Structure,
+                                                   efa_psych$unrot_loadings)) < .998) && 
        is.na(nfac_admiss_psych)){
         
         nfac_admiss_psych <- ncol(efa_psych$rot_loadings)
@@ -212,7 +213,8 @@ for(i in 1:length(names_dat)){
     
     # Save number of factors for first admissible solution in SPSS
     if(class(efa_spss) != "try-error" && min_salient_spss == TRUE && 
-       all(efa_spss$h2 < .998) && all(efa_spss$rot_loadings < .998) && 
+       all(efa_spss$h2 < .998) && all(abs(ifelse(nfact > 1, efa_spss$Structure,
+                                                  efa_spss$unrot_loadings)) < .998) && 
        is.na(nfac_admiss_spss)){
         
         nfac_admiss_spss <- ncol(efa_spss$rot_loadings)
@@ -222,8 +224,10 @@ for(i in 1:length(names_dat)){
     # Proceed when first solution without try-error in both types is found
     if(class(efa_psych) != "try-error" & class(efa_spss) != "try-error") {
       
-      if(all(efa_psych$h2 < .998) & all(efa_psych$h2 < .998) &
-         all(efa_psych$rot_loadings < .998) & all(efa_spss$rot_loadings < .998) &
+      if(all(efa_psych$h2 < .998) & all(efa_spss$h2 < .998) &
+         all(abs(ifelse(nfact > 1, efa_psych$Structure, efa_psych$unrot_loadings)) 
+             < .998) & all(abs(ifelse(nfact > 1, efa_spss$Structure,
+                                      efa_spss$unrot_loadings)) < .998) &
          min_salient_psych == TRUE & min_salient_spss == TRUE) {
           
         nfac_final <- ncol(efa_psych$rot_loadings)
@@ -283,12 +287,15 @@ for(i in 1:length(names_dat)){
     
     # Calculate varimax solution
     var_psych <- EFAtools:::.VARIMAX(efa_psych, type = "psych")
-    var_spss <- EFAtools:::.VARIMAX(efa_spss, type = "psych")
+    var_spss <- EFAtools:::.VARIMAX(efa_spss, type = "SPSS")
   
     # Calculate differences in loadings and variable-to-factor-correspondences
-    diff_psych_spss_paf <- COMPARE(efa_psych$unrot_loadings, efa_spss$unrot_loadings)
-    diff_psych_spss_var <- COMPARE(var_psych$rot_loadings, var_spss$rot_loadings)
-    diff_psych_spss_pro <- COMPARE(efa_psych$rot_loadings, efa_spss$rot_loadings)
+    diff_psych_spss_paf <- COMPARE(efa_psych$unrot_loadings, efa_spss$unrot_loadings,
+                                   thresh = .20)
+    diff_psych_spss_var <- COMPARE(var_psych$rot_loadings, var_spss$rot_loadings,
+                                   thresh = .20)
+    diff_psych_spss_pro <- COMPARE(efa_psych$rot_loadings, efa_spss$rot_loadings,
+                                   thresh = .20)
 
     m_diff_paf <- diff_psych_spss_paf$mean_abs_diff
     md_diff_paf <- diff_psych_spss_paf$median_abs_diff
@@ -338,11 +345,11 @@ for(i in 1:length(names_dat)){
                         efa_spss$Phi[lower.tri(efa_spss$Phi)]))
     
     # Count of cross-loadings for each solution
-    temp_cross_psych <- rowSums(abs(efa_psych$rot_loadings) >= .30)
+    temp_cross_psych <- rowSums(abs(efa_psych$rot_loadings) >= .20)
     cross_psych <- sum(ifelse(temp_cross_psych > 0, temp_cross_psych - 1, 
                               temp_cross_psych))
     
-    temp_cross_spss <- rowSums(abs(efa_spss$rot_loadings) >= .30)
+    temp_cross_spss <- rowSums(abs(efa_spss$rot_loadings) >= .20)
     cross_spss <- sum(ifelse(temp_cross_spss > 0, temp_cross_spss - 1, 
                               temp_cross_spss))
     
