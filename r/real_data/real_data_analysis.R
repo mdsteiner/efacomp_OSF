@@ -252,7 +252,6 @@ ggplot(real_dat_res[real_dat_res$var_fac_ratio >= 3, ], aes(x = max_diff_pro)) +
 # Mean differences
 summary(lm(m_diff_pro ~ var_fac_ratio, real_dat_res))
 plot(lm(m_diff_pro ~ var_fac_ratio, real_dat_res))
-
 cor(real_dat_res$var_fac_ratio, real_dat_res$m_diff_pro,
     method = "spearman")
 
@@ -474,26 +473,5 @@ phi_dat %>%
         panel.grid.major.x = element_blank(),
         legend.position = "none")
 dev.off()
-
-## Variable-to-factor correspondences depending on the median and maximum 
-## correlations between the factors
-phi_dat %>% 
-  select(-Phi) %>%
-  group_by(data) %>%
-  slice(1) %>% 
-  ungroup() %>% 
-  ggplot(aes(x = md_phi, y = diff_corres)) +
-  geom_point() +
-  geom_smooth(method = "gam")
-
-phi_dat %>% 
-  select(-Phi) %>%
-  group_by(data) %>%
-  slice(1) %>% 
-  ungroup() %>% 
-  ggplot(aes(x = max_phi, y = diff_corres)) +
-  geom_point() +
-  geom_smooth(method = "gam")
-
 
 
