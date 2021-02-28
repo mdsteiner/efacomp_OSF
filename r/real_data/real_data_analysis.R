@@ -151,7 +151,7 @@ diff_plot <- diff_load %>%
   scale_y_continuous(breaks = seq(0, 0.7, 0.05)) +
   facet_wrap(vars(procedure), ncol = 3) +
   stat_summary(fun = "mean", geom = "point", shape = 23, fill = "white") +
-  labs(x = "", y = "Differences in Loadings") +
+  labs(x = "", y = "Absolute Differences in Loadings") +
   theme_bw() +
   theme(legend.position = "none",
         axis.text.x = element_text(size = 12, color = "black"),
@@ -200,7 +200,7 @@ fac_con_plot <- fac_con_dat %>%
   geom_jitter(height = 0, width = 0.1, alpha = 0.5, color = viridis(1)) +
   geom_violin(size = 0.5, color = viridis(1), fill = alpha(viridis(1), 0.3)) +
   scale_fill_manual(values = viridis(1, begin = .2, alpha = .7)) +
-  scale_y_continuous(breaks = seq(0, 1, 0.1)) +
+  scale_y_continuous(breaks = seq(-.2, 1, 0.1)) +
   facet_wrap(vars(procedure), ncol = 3) +
   stat_summary(fun = "mean", geom = "point", shape = 23, fill = "white") +
   labs(x = "", y = "Factor Congruence") +

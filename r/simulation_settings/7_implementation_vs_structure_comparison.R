@@ -44,40 +44,7 @@ settings$setting_id <- 1:nrow(settings)
 
 
 # read in data
-recovery <- readRDS("output/simulation_settings/model_recovery_settings_results_450.RDS")
-# to decrease size of recovery object
-recovery <- recovery %>%
-  select(case:diff_factor_corres, comm_meth:error, -iter)
-
-recovery$dat_id <- rep(rep(1:500, each = nrow(settings)), nrow(model_control))
-
-recovery <- recovery %>%
-  mutate_if(is.factor, as.character) %>%
-  as_tibble() %>%
-  left_join(settings, by = c("comm_meth", "criterion_type", "abs_eigen",
-                             "conv_crit", "var_type", "p_type", "k")) %>% 
-  left_join(model_control, by = c("case", "cors", "N")) %>% 
-  filter(case_ids %in% current_case_ids)
-
-
-
-recovery2 <- readRDS("output/simulation_settings/model_recovery_settings_results_450_2.RDS")
-# to decrease size of recovery object
-recovery2 <- recovery2 %>%
-  select(case:diff_factor_corres, comm_meth:error, -iter)
-
-recovery2$dat_id <- rep(rep(501:1000, each = nrow(settings)), nrow(model_control))
-
-recovery2 <- recovery2 %>%
-  mutate_if(is.factor, as.character) %>%
-  as_tibble() %>%
-  left_join(settings, by = c("comm_meth", "criterion_type", "abs_eigen",
-                             "conv_crit", "var_type", "p_type", "k")) %>% 
-  left_join(model_control, by = c("case", "cors", "N")) %>% 
-  filter(case_ids %in% current_case_ids)
-
-recovery <- rbind(recovery, recovery2)
-rm(recovery2)
+recovery <- readRDS("output/simulation_settings/recovery_450.RDS")
 
 ### fit values between settings vs across cases ================================
 dat <- recovery %>% 

@@ -40,3 +40,11 @@ vignettes/*.pdf
 
 .DS_Store
 *.DS_Store
+
+r/scicore/simulation_psych_spss/output/
+r/scicore/simulation_psych_spss/err/
+r/scicore/simulation_psych_spss/out/
+
+r/scicore/simulation_settings/output/
+r/scicore/simulation_settings/err/
+r/scicore/simulation_settings/out/

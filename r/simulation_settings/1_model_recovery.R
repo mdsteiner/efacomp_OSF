@@ -17,7 +17,7 @@ source("r/model_recovery_function.R")
 model_control <- expand.grid(
   case = names(population_models$loadings)[1:27],
   cors = names(population_models$phis_3),
-  N = c(180), # repeat with 450
+  N = c(450), # repeat with 450
   stringsAsFactors = FALSE)
 
 settings <- expand.grid(
@@ -83,7 +83,7 @@ cluster_result_df <- do.call(what = rbind,
                              args = cluster_result_ls)
 
 # run twice with 500 each (append suffix  _2), otherwise the working memory won't suffice
-saveRDS(cluster_result_df, file = "output/simulation_settings/model_recovery_settings_results_180.RDS")
+saveRDS(cluster_result_df, file = "output/simulation_settings/model_recovery_settings_results_450.RDS")
 
 ov_t2 <- Sys.time()
 ov_t2 - ov_t1

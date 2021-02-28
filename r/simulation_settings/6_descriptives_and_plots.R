@@ -47,20 +47,15 @@ hey_180 <- readRDS("output/simulation_settings/results_heywood_settings_180.RDS"
 hey_180_NE <- readRDS("output/simulation_settings/results_heywood_NE_settings_180.RDS")
 hey_450 <- readRDS("output/simulation_settings/results_heywood_settings_450.RDS")
 hey_450_NE <- readRDS("output/simulation_settings/results_heywood_NE_settings_450.RDS")
+
 fc_180 <- readRDS("output/simulation_settings/results_factor_corres_settings_180.RDS")
 fc_180_NE <- readRDS("output/simulation_settings/results_factor_corres_NE_settings_180.RDS")
 fc_450 <- readRDS("output/simulation_settings/results_factor_corres_settings_450.RDS")
 fc_450_NE <- readRDS("output/simulation_settings/results_factor_corres_NE_settings_450.RDS")
 
-fc_180_bin <- readRDS("output/simulation_settings/results_factor_corres_binary_settings_180.RDS")
-fc_180_NE_bin <- readRDS("output/simulation_settings/results_factor_corres_binary_NE_settings_180.RDS")
-fc_450_bin <- readRDS("output/simulation_settings/results_factor_corres_binary_settings_450.RDS")
-fc_450_NE_bin <- readRDS("output/simulation_settings/results_factor_corres_binary_NE_settings_450.RDS")
-
 datnames <- c("dev_180", "dev_180_NE", "dev_450", "dev_450_NE", "hey_180",
               "hey_180_NE", "hey_450", "hey_450_NE", "fc_180",
-              "fc_180_NE", "fc_450", "fc_450_NE", "fc_180_bin", "fc_180_NE_bin",
-              "fc_450_bin", "fc_450_NE_bin")
+              "fc_180_NE", "fc_450", "fc_450_NE")
 
 datlist <- list(
   dev_180 = dev_180,
@@ -74,18 +69,13 @@ datlist <- list(
   fc_180 = fc_180,
   fc_180_NE = fc_180_NE,
   fc_450 = fc_450,
-  fc_450_NE = fc_450_NE,
-  fc_180_bin = fc_180_bin,
-  fc_180_NE_bin = fc_180_NE_bin,
-  fc_450_bin = fc_450_bin,
-  fc_450_NE_bin = fc_450_NE_bin
+  fc_450_NE = fc_450_NE
 )
 
 res_list <- list()
 dev_ids <- c()
 hey_ids <- c()
 fac_ids <- c()
-fac_bin_ids <- c()
 for (dat_i in 1:length(datlist)){
   
   pp <- matrix(0, ncol = 2, nrow = 192)
@@ -94,7 +84,7 @@ for (dat_i in 1:length(datlist)){
     mutate(best_ids = as.character(best_ids)) #%>% 
   #filter(evidence == "Different")
   for (i in 1:192) {
-    pp[i, 2] <-  mean(sapply(temp$best_ids[temp$N_datasets > 0], 
+    pp[i, 2] <-  mean(sapply(temp$best_ids[temp$N_datasets > 10], 
                              function(j) i %in% 
                                as.numeric(str_split(j, ";", simplify = TRUE))))
   }
@@ -116,39 +106,68 @@ for (dat_i in 1:length(datlist)){
     hey_ids <- c(hey_ids, ids)
   } else if (dat_i %in% 9:12){
     fac_ids <- c(fac_ids, ids)
-  } else {
-    fac_bin_ids <- c(fac_bin_ids, ids)
   }
   
 }
 
 
-table(dev_ids) %>% sort() # 5, 11, 29, 35, 150, 156, 174, 180
-table(hey_ids) %>% sort() # 52 58 76 82
-table(fac_ids) %>% sort() # 149, 173, 179
-table(fac_bin_ids) %>% sort() # 150, 156, 161, 167, 174, 180, 185, 191
+table(dev_ids) %>% sort() # 5, 6, 11, 29, 30, 35, 51, 54, 75, 78,  174, 180
+table(hey_ids) %>% sort() %>% {names(.)[. == 4]} %>% paste0(., collapse = ", ")  # 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 22, 25, 26, 27, 28, 29, 30, 31, 32, 34, 35, 40, 46, 49, 50, 51, 52, 53, 54, 55, 56, 58, 59, 64, 70, 73, 74, 75, 76, 77, 78, 79, 80, 82, 83, 88, 94, 97, 98, 99, 100, 101, 102, 103, 104, 106, 107, 112, 118, 121, 122, 123, 124, 125, 126, 127, 128, 130, 131, 136, 142, 145, 146, 147, 148, 149, 150, 151, 152, 154, 155, 160, 166, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179, 184, 190
+table(fac_ids) %>% sort() %>% names() %>% paste0(., collapse = ", ") # 50, 53, 56, 59, 74, 80, 99, 149, 181, 187, 6, 30, 51, 54, 75, 77, 78, 83, 102, 126, 147, 150, 171, 174
 
+settings[settings$setting_id %in% c(5, 6, 11, 29, 30, 35, 57, 60, 81, 84, 174,
+                                    180),] # dev_ids
+settings[settings$setting_id %in% c(5, 6, 11, 29, 30, 35, 150, 174),] # hey_ids
+settings[settings$setting_id %in% c(6, 12, 30, 33, 36, 51, 53, 54, 57, 59, 60, 75, 77, 78, 81, 83, 84, 99, 102, 105, 108, 126, 129, 132, 147, 149, 150, 153, 156, 159, 165, 171, 173, 174, 177, 179, 180, 181, 187),] # fac_ids
 
-settings[settings$setting_id %in% c(5, 11, 29, 35, 150, 156, 174, 180),] # dev_ids
-settings[settings$setting_id %in% c(52, 58, 76, 82),] # hey_ids
-settings[settings$setting_id %in% c(149, 173, 179),] # fac_ids
-settings[settings$setting_id %in% c(150, 156, 161, 167, 174, 180, 185, 191),] # fac_ids bin
+# psych: 108
+# psych with unity: 106
+# SPSS: 171
 
-id_vec <- c(5, 11, 29, 35, 52, 58, 76, 82, 149, 150, 156, 161, 167, 173, 174, 179, 180, 185, 191, 106, 108, 171)
+id_vec <- c(5, 6, 11, 29, 30, 35, 50, 51, 53, 54, 56, 59, 74, 75, 77, 78, 80, 83,
+            99, 102, 106, 108, 126, 147, 149, 150, 171, 174, 180, 181, 187)
 
-settings[settings$setting_id %in% id_vec,]
+settings[settings$setting_id %in% id_vec,] %>% pull(comm_meth) %>% 
+  toupper() %>% paste0(collapse = ",")
+settings[settings$setting_id %in% id_vec,] %>%
+  mutate(criterion_type = ifelse(criterion_type == "sums", "sum", "max individual")) %>% 
+  pull(criterion_type) %>% paste0(collapse = ",")
+settings[settings$setting_id %in% id_vec,] %>% pull(abs_eigen) %>% 
+  as.character() %>% paste0(collapse = ",")
+settings[settings$setting_id %in% id_vec,] %>% pull(conv_crit) %>% 
+  paste0(collapse = ",")
+settings[settings$setting_id %in% id_vec,] %>% pull(var_type) %>% 
+  paste0(collapse = ",")
+settings[settings$setting_id %in% id_vec,] %>% 
+  mutate(p_type = case_when(p_type == "norm" ~ "normalized",
+                            TRUE ~ "unnormalized")) %>% 
+  pull(p_type) %>% paste0(collapse = ",")
+settings[settings$setting_id %in% id_vec,] %>% pull(k) %>% 
+  paste0(collapse = ",")
 
 
 # results deviances
-res_list[["dev_180"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["dev_180_NE"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["dev_450"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["dev_450_NE"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
+res_list[["dev_180"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["dev_180_NE"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["dev_450"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["dev_450_NE"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
 
-res_list[["dev_180"]][["all"]] %>%  mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["dev_180_NE"]][["all"]] %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["dev_450"]][["all"]] %>%  mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["dev_450_NE"]][["all"]] %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
+res_list[["dev_180"]][["all"]] %>%  mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["dev_180_NE"]][["all"]] %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["dev_450"]][["all"]] %>%  mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["dev_450_NE"]][["all"]] %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
 
 
 res_list[["dev_180"]][["best"]]
@@ -157,15 +176,27 @@ res_list[["dev_450"]][["best"]]
 res_list[["dev_450_NE"]][["best"]]
 
 # results heywood cases
-res_list[["hey_180"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["hey_180_NE"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["hey_450"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["hey_450_NE"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
+res_list[["hey_180"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["hey_180_NE"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["hey_450"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["hey_450_NE"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
 
-res_list[["hey_180"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["hey_180_NE"]][["all"]] %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["hey_450"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["hey_450_NE"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
+res_list[["hey_180"]][["all"]]  %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["hey_180_NE"]][["all"]] %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["hey_450"]][["all"]]  %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["hey_450_NE"]][["all"]]  %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
 
 
 res_list[["hey_180"]][["best"]]
@@ -174,15 +205,27 @@ res_list[["hey_450"]][["best"]]
 res_list[["hey_450_NE"]][["best"]]
 
 # results factor correspondences
-res_list[["fc_180"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["fc_180_NE"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["fc_450"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["fc_450_NE"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
+res_list[["fc_180"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["fc_180_NE"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["fc_450"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
+res_list[["fc_450_NE"]][["all"]] %>% filter(id %in% id_vec) %>%
+  mutate(percent = round(percent, 2)) %>% arrange(id) %>% pull(percent) %>% 
+  paste0(collapse = ",")
 
-res_list[["fc_180"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["fc_180_NE"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["fc_450"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["fc_450_NE"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
+res_list[["fc_180"]][["all"]]  %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["fc_180_NE"]][["all"]]  %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["fc_450"]][["all"]]  %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
+res_list[["fc_450_NE"]][["all"]]  %>% mutate(percent = round(percent, 2)) %>%
+  arrange(desc(percent))
 
 
 res_list[["fc_180"]][["best"]]
@@ -190,44 +233,26 @@ res_list[["fc_180_NE"]][["best"]]
 res_list[["fc_450"]][["best"]]
 res_list[["fc_450_NE"]][["best"]]
 
-# results factor correspondences binary
-res_list[["fc_180_bin"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["fc_180_NE_bin"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["fc_450_bin"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-res_list[["fc_450_NE_bin"]][["all"]] %>% filter(id %in% id_vec) %>% mutate(percent = round(percent, 3)) %>% arrange(id)
-
-res_list[["fc_180_bin"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["fc_180_NE_bin"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["fc_450_bin"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-res_list[["fc_450_NE_bin"]][["all"]]  %>% mutate(percent = round(percent, 3)) %>% arrange(desc(percent))
-
-
-res_list[["fc_180_bin"]][["best"]]
-res_list[["fc_180_NE_bin"]][["best"]]
-res_list[["fc_450_bin"]][["best"]]
-res_list[["fc_450_NE_bin"]][["best"]]
-
 
 # setting ids:
 # psych: 108
 # psych with unity: 106
 # SPSS: 171
 
-# best: 150
-recovery <- readRDS("output/simulation_settings/model_recovery_settings_results_180.RDS")
+# best: 174
+recovery <- readRDS("output/simulation_settings/recovery_180.RDS")
 # to decrease size of recovery object
 recovery <- recovery %>%
   select(case:g, heywood, diff_factor_corres:error, -iter) %>% 
   mutate(
-    dat_id = rep(rep(1:500, each = nrow(settings)), nrow(model_control)),
-    dat_id2 = rep(1:(500 * nrow(model_control)), each = nrow(settings))
+    dat_id2 = rep(1:(1000 * nrow(model_control)), each = nrow(settings))
   ) %>% 
   mutate_if(is.factor, as.character) %>%
   as_tibble() %>%
   left_join(settings, by = c("comm_meth", "criterion_type", "abs_eigen",
                              "conv_crit", "var_type", "p_type", "k")) %>% 
   left_join(model_control, by = c("case", "cors", "N")) %>% 
-  filter(setting_id %in% c(150, 108, 106, 171))
+  filter(setting_id %in% c(174, 108, 106, 171))
 
 unity_ids <- recovery %>% 
   filter(setting_id == 108 & !is.na(error)) %>% 
@@ -235,55 +260,27 @@ unity_ids <- recovery %>%
 
 recovery <- recovery %>% 
   filter(!(setting_id == 106 & !(dat_id2 %in% unity_ids)),
-         is.na(error))
-
-recovery2 <- readRDS("output/simulation_settings/model_recovery_settings_results_180_2.RDS")
-# to decrease size of recovery object
-recovery2 <- recovery2 %>%
-  select(case:g, diff_factor_corres:error, -iter) %>% 
-  mutate(
-    dat_id = rep(rep(501:1000, each = nrow(settings)), nrow(model_control)),
-    dat_id2 = rep(1:(500 * nrow(model_control)), each = nrow(settings))
-  ) %>%
-  mutate_if(is.factor, as.character) %>%
-  as_tibble() %>%
-  left_join(settings, by = c("comm_meth", "criterion_type", "abs_eigen",
-                             "conv_crit", "var_type", "p_type", "k")) %>% 
-  left_join(model_control, by = c("case", "cors", "N")) %>% 
-  filter(setting_id %in% c(150, 108, 106, 171))
-
-unity_ids2 <- recovery2 %>% 
-  filter(setting_id == 108 & !is.na(error)) %>% 
-  pull(dat_id2)
-
-recovery2 <- recovery2 %>% 
-  filter(!(setting_id == 106 & !(dat_id2 %in% unity_ids2)),
-         is.na(error))
-
-recovery <- recovery %>% 
-  bind_rows(recovery2) %>% 
+         is.na(error)) %>% 
   mutate(setting_id = case_when(setting_id %in% c(108, 106) ~ "R psych",
                                 setting_id == 171 ~"SPSS",
-                                setting_id == 150 ~ "Best"))
+                                setting_id == 174 ~ "Best"))
 
-rm(recovery2)
 
 # 450
 
-recovery_450 <- readRDS("output/simulation_settings/model_recovery_settings_results_450.RDS")
+recovery_450 <- readRDS("output/simulation_settings/recovery_450.RDS")
 # to decrease size of recovery object
 recovery_450 <- recovery_450 %>%
   select(case:g, heywood, diff_factor_corres:error, -iter) %>% 
   mutate(
-    dat_id = rep(rep(1:500, each = nrow(settings)), nrow(model_control)),
-    dat_id2 = rep(1:(500 * nrow(model_control)), each = nrow(settings))
+    dat_id2 = rep(1:(1000 * nrow(model_control)), each = nrow(settings))
   ) %>% 
   mutate_if(is.factor, as.character) %>%
   as_tibble() %>%
   left_join(settings, by = c("comm_meth", "criterion_type", "abs_eigen",
                              "conv_crit", "var_type", "p_type", "k")) %>% 
   left_join(model_control, by = c("case", "cors")) %>% 
-  filter(setting_id %in% c(150, 108, 106, 171))
+  filter(setting_id %in% c(174, 108, 106, 171))
 
 unity_ids <- recovery %>% 
   filter(setting_id == 108 & !is.na(error)) %>% 
@@ -291,39 +288,11 @@ unity_ids <- recovery %>%
 
 recovery_450 <- recovery_450 %>% 
   filter(!(setting_id == 106 & !(dat_id2 %in% unity_ids)),
-         is.na(error))
-
-
-recovery2 <- readRDS("output/simulation_settings/model_recovery_settings_results_450_2.RDS")
-# to decrease size of recovery object
-recovery2 <- recovery2 %>%
-  select(case:g, heywood, diff_factor_corres:error, -iter) %>% 
-  mutate(
-    dat_id = rep(rep(501:1000, each = nrow(settings)), nrow(model_control)),
-    dat_id2 = rep(1:(500 * nrow(model_control)), each = nrow(settings))
-  ) %>%
-  mutate_if(is.factor, as.character) %>%
-  as_tibble() %>%
-  left_join(settings, by = c("comm_meth", "criterion_type", "abs_eigen",
-                             "conv_crit", "var_type", "p_type", "k")) %>% 
-  left_join(model_control, by = c("case", "cors")) %>% 
-  filter(setting_id %in% c(150, 108, 106, 171))
-
-unity_ids2 <- recovery2 %>% 
-  filter(setting_id == 108 & !is.na(error)) %>% 
-  pull(dat_id2)
-
-recovery2 <- recovery2 %>% 
-  filter(!(setting_id == 106 & !(dat_id2 %in% unity_ids2)),
-         is.na(error))
-
-recovery_450 <- recovery_450 %>% 
-  bind_rows(recovery2) %>% 
+         is.na(error)) %>% 
   mutate(setting_id = case_when(setting_id %in% c(108, 106) ~ "R psych",
                                 setting_id == 171 ~"SPSS",
-                                setting_id == 150 ~ "Best"))
+                                setting_id == 174 ~ "Best"))
 
-rm(recovery2)
 
 temp <- recovery %>% 
   mutate(case = gsub("case_", "", case)) %>% 
@@ -619,8 +588,7 @@ table(hey_180$evidence)
 table(hey_450$evidence)
 table(fc_180$evidence)
 table(fc_450$evidence)
-table(fc_180_bin$evidence)
-table(fc_450_bin$evidence)
+
 
 # NE
 table(dev_180_NE$evidence)
@@ -629,5 +597,4 @@ table(hey_180_NE$evidence)
 table(hey_450_NE$evidence)
 table(fc_180_NE$evidence)
 table(fc_450_NE$evidence)
-table(fc_180_NE_bin$evidence)
-table(fc_450_NE_bin$evidence)
+
